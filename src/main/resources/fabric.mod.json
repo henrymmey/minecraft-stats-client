@@ -1,0 +1,24 @@
+{
+	"schemaVersion": 1,
+	"id": "minecraft-stats",
+	"version": "${version}",
+	"name": "Minecraft Stats",
+	"description": "Generic client-side Minecraft statistics client for self-hosted Stats Servers.",
+	"authors": ["Henry Meyer"],
+	"contact": {
+		"sources": "https://github.com/henrymmey/minecraft-stats-client"
+	},
+	"license": "MIT",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"io.github.henrymmey.minecraftstats.MinecraftStatsClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.1",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
