@@ -34,6 +34,39 @@ public record ClientConfig(
         );
     }
 
+    public ClientConfig normalized() {
+        ClientConfig defaults = defaults();
+
+        Api normalizedApi = api == null
+                ? defaults.api
+                : new Api(
+                api.url() == null ? defaults.api.url() : api.url(),
+                api.key() == null ? "" : api.key()
+        );
+
+        Upload normalizedUpload = upload == null
+                ? defaults.upload
+                : new Upload(
+                Math.max(1, upload.intervalSeconds()),
+                Math.max(1, Math.min(500, upload.batchSize())),
+                Math.max(1, Math.min(5000, upload.maxQueueSize()))
+        );
+
+        Servers normalizedServers = servers == null
+                ? defaults.servers
+                : new Servers(servers.allow() == null ? List.of() : List.copyOf(servers.allow()));
+
+        Privacy normalizedPrivacy = privacy == null
+                ? defaults.privacy
+                : new Privacy(
+                privacy.sendStatistics(),
+                privacy.sendAdvancements(),
+                privacy.sendEvents()
+        );
+
+        return new ClientConfig(enabled, normalizedApi, normalizedUpload, normalizedServers, normalizedPrivacy);
+    }
+
     public static ClientConfig load(Path path) {
         try {
             if (Files.notExists(path)) {
@@ -47,7 +80,7 @@ public record ClientConfig(
                     ClientConfig.class
             );
 
-            return parsed == null ? defaults() : parsed;
+            return parsed == null ? defaults() : parsed.normalized();
         } catch (Exception exception) {
             throw new IllegalStateException("Failed to load Minecraft Stats configuration.", exception);
         }
@@ -60,7 +93,7 @@ public record ClientConfig(
 
             Files.writeString(
                     temporary,
-                    GSON.toJson(config),
+                    GSON.toJson(config.normalized()),
                     StandardCharsets.UTF_8
             );
 
