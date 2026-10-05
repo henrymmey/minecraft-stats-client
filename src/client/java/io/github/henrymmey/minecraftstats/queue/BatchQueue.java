@@ -2,11 +2,11 @@ package io.github.henrymmey.minecraftstats.queue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 public final class BatchQueue {
@@ -28,10 +28,9 @@ public final class BatchQueue {
         if (size() >= maxSize) return false;
 
         try {
-            Path target = directory.resolve(String.format(
-                    "%020d.json",
-                    System.nanoTime()
-            ));
+            Path target = directory.resolve(
+                    Instant.now().toEpochMilli() + "-" + UUID.randomUUID() + ".json"
+            );
 
             Files.writeString(
                     target,
