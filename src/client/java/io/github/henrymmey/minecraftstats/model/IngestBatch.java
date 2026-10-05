@@ -1,6 +1,5 @@
 package io.github.henrymmey.minecraftstats.model;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,7 +10,7 @@ public record IngestBatch(
         Server server,
         String season,
         UUID sessionId,
-        OffsetDateTime observedAt,
+        String observedAt,
         List<StatObservation> stats,
         List<ClientEvent> events
 ) {
