@@ -58,7 +58,9 @@ public final class TelemetryController {
         if (session == null) {
             ClientSession ended = sessions.disconnect();
 
-            if (ended != null && lastUploadedSession != null && lastUploadedSession.id().equals(ended.id())) {
+            if (ended != null && lastUploadedSession != null
+                    && lastUploadedSession.id().equals(ended.id())
+                    && config.privacy().sendEvents()) {
                 uploader.enqueue(
                         buildBatch(ended, Instant.now().toString()),
                         Map.of(),
@@ -74,12 +76,16 @@ public final class TelemetryController {
             return;
         }
 
+        if (lastUploadedSession == null || !lastUploadedSession.id().equals(session.id())) {
+            snapshot.clear();
+            ticksUntilSnapshot = 0;
+        }
+
         if (ticksUntilSnapshot > 0) {
             ticksUntilSnapshot--;
         }
 
-        if (ticksUntilSnapshot > 0 && lastUploadedSession != null
-                && lastUploadedSession.id().equals(session.id())) {
+        if (ticksUntilSnapshot > 0) {
             return;
         }
 
@@ -96,7 +102,9 @@ public final class TelemetryController {
 
         List<ClientEvent> events = lastUploadedSession == null
                 || !lastUploadedSession.id().equals(session.id())
+                ? (config.privacy().sendEvents()
                 ? List.of(event("SESSION_STARTED"))
+                : List.of())
                 : List.of();
 
         uploader.enqueue(
