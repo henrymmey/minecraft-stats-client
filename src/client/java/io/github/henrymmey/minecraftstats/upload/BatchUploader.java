@@ -27,6 +27,10 @@ public final class BatchUploader {
     private final int batchSize;
     private final AtomicBoolean flushing = new AtomicBoolean();
 
+    private volatile long nextAttemptAtMillis = 0L;
+    private volatile int retryCount = 0;
+    private volatile boolean blocked = false;
+
     public BatchUploader(ApiClient api, BatchQueue queue, ClientConfig config) {
         this.api = api;
         this.queue = queue;
@@ -54,11 +58,7 @@ public final class BatchUploader {
         }
     }
 
-    private void enqueueBatch(
-            IngestBatch base,
-            List<StatObservation> stats,
-            List<ClientEvent> events
-    ) {
+    private void enqueueBatch(IngestBatch base, List<StatObservation> stats, List<ClientEvent> events) {
         IngestBatch batch = new IngestBatch(
                 base.protocolVersion(),
                 base.client(),
@@ -75,10 +75,13 @@ public final class BatchUploader {
             MinecraftStatsClient.LOGGER.warn(
                     "Minecraft Stats upload queue is full; dropping one batch."
             );
+        } else {
+            blocked = false;
         }
     }
 
     public void flush() {
+        if (blocked || System.currentTimeMillis() < nextAttemptAtMillis) return;
         if (!flushing.compareAndSet(false, true)) return;
 
         sendNext()
@@ -97,6 +100,7 @@ public final class BatchUploader {
         var path = queue.peek();
 
         if (path.isEmpty()) {
+            retryCount = 0;
             return CompletableFuture.completedFuture(null);
         }
 
@@ -110,13 +114,37 @@ public final class BatchUploader {
 
         return api.postBatch(json.get()).thenCompose(result -> {
             switch (result.kind()) {
-                case SUCCESS, PERMANENT_FAILURE -> queue.remove(batchPath);
-                case RETRY, DISABLED, NOT_CONFIGURED, INVALID_URL -> {
+                case SUCCESS -> {
+                    queue.remove(batchPath);
+                    retryCount = 0;
+                    nextAttemptAtMillis = 0L;
+                    return sendNext();
+                }
+
+                case RETRY -> {
+                    retryCount = Math.min(retryCount + 1, 7);
+                    long delaySeconds = 1L << retryCount;
+                    nextAttemptAtMillis = System.currentTimeMillis()
+                            + Math.min(delaySeconds, 120L) * 1000L;
+                    return CompletableFuture.completedFuture(null);
+                }
+
+                case PERMANENT_FAILURE, NOT_CONFIGURED, INVALID_URL -> {
+                    blocked = true;
+                    MinecraftStatsClient.LOGGER.warn(
+                            "Minecraft Stats upload paused because the queued request cannot be accepted. HTTP status: {}. The queued data was kept.",
+                            result.httpStatus()
+                    );
+                    return CompletableFuture.completedFuture(null);
+                }
+
+                case DISABLED -> {
+                    blocked = true;
                     return CompletableFuture.completedFuture(null);
                 }
             }
 
-            return sendNext();
+            return CompletableFuture.completedFuture(null);
         });
     }
 }
