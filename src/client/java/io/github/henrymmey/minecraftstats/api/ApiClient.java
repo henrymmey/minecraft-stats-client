@@ -33,7 +33,8 @@ public final class ApiClient {
         final URI uri;
         try {
             uri = URI.create(url.replaceAll("/+$", "") + "/api/v1/ingest/batch");
-            if (!"https".equalsIgnoreCase(uri.getScheme()) && !"http".equalsIgnoreCase(uri.getScheme())) {
+            if (!"https".equalsIgnoreCase(uri.getScheme())
+                    && !("http".equalsIgnoreCase(uri.getScheme()) && isLocalHost(uri.getHost()))) {
                 return CompletableFuture.completedFuture(ApiResult.invalidUrl());
             }
         } catch (IllegalArgumentException exception) {
@@ -58,6 +59,12 @@ public final class ApiClient {
                     return ApiResult.permanentFailure(status);
                 })
                 .exceptionally(ignored -> ApiResult.retry(-1));
+    }
+
+    private boolean isLocalHost(String host) {
+        return "localhost".equalsIgnoreCase(host)
+                || "127.0.0.1".equals(host)
+                || "::1".equals(host);
     }
 
     public record ApiResult(Kind kind, int httpStatus) {
