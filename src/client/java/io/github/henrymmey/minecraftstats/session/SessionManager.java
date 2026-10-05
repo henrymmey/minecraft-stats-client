@@ -10,7 +10,7 @@ public final class SessionManager {
 
     public ClientSession update(Minecraft minecraft) {
         if (minecraft.player == null || minecraft.getCurrentServer() == null) {
-            return current;
+            return null;
         }
 
         UUID playerUuid = minecraft.player.getUUID();
@@ -37,6 +37,12 @@ public final class SessionManager {
 
     public ClientSession current() {
         return current;
+    }
+
+    public ClientSession disconnect() {
+        ClientSession previous = current;
+        current = null;
+        return previous;
     }
 
     private ServerAddress parseAddress(String address) {
