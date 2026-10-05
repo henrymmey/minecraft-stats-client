@@ -26,4 +26,8 @@ public final class StatsSnapshot {
 
         return result;
     }
+
+    public void clear() {
+        previous.clear();
+    }
 }
