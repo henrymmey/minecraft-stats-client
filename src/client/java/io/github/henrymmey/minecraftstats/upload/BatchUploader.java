@@ -1,33 +1,77 @@
 package io.github.henrymmey.minecraftstats.upload;
 
+import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.github.henrymmey.minecraftstats.MinecraftStatsClient;
 import io.github.henrymmey.minecraftstats.api.ApiClient;
+import io.github.henrymmey.minecraftstats.config.ClientConfig;
+import io.github.henrymmey.minecraftstats.model.ClientEvent;
 import io.github.henrymmey.minecraftstats.model.IngestBatch;
+import io.github.henrymmey.minecraftstats.model.StatObservation;
 import io.github.henrymmey.minecraftstats.queue.BatchQueue;
 
 import java.nio.file.Path;
-import java.util.Optional;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class BatchUploader {
-    private static final Gson GSON = new GsonBuilder().create();
+    private static final Gson GSON = new GsonBuilder()
+            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+            .create();
 
     private final ApiClient api;
     private final BatchQueue queue;
+    private final int batchSize;
     private final AtomicBoolean flushing = new AtomicBoolean();
 
-    public BatchUploader(ApiClient api, BatchQueue queue) {
+    public BatchUploader(ApiClient api, BatchQueue queue, ClientConfig config) {
         this.api = api;
         this.queue = queue;
+        this.batchSize = Math.max(1, Math.min(500, config.upload().batchSize()));
     }
 
-    public void enqueue(IngestBatch batch) {
-        String json = GSON.toJson(batch);
+    public void enqueue(IngestBatch base, Map<String, Long> changedStats, List<ClientEvent> events) {
+        List<StatObservation> observations = changedStats.entrySet().stream()
+                .map(entry -> new StatObservation(entry.getKey(), entry.getValue()))
+                .toList();
 
-        if (!queue.offer(json)) {
+        if (observations.isEmpty()) {
+            enqueueBatch(base, List.of(), events);
+            return;
+        }
+
+        for (int start = 0; start < observations.size(); start += batchSize) {
+            int end = Math.min(start + batchSize, observations.size());
+
+            enqueueBatch(
+                    base,
+                    observations.subList(start, end),
+                    start == 0 ? events : List.of()
+            );
+        }
+    }
+
+    private void enqueueBatch(
+            IngestBatch base,
+            List<StatObservation> stats,
+            List<ClientEvent> events
+    ) {
+        IngestBatch batch = new IngestBatch(
+                base.protocolVersion(),
+                base.client(),
+                base.player(),
+                base.server(),
+                base.season(),
+                base.sessionId(),
+                base.observedAt(),
+                stats,
+                events
+        );
+
+        if (!queue.offer(GSON.toJson(batch))) {
             MinecraftStatsClient.LOGGER.warn(
                     "Minecraft Stats upload queue is full; dropping one batch."
             );
@@ -35,24 +79,29 @@ public final class BatchUploader {
     }
 
     public void flush() {
-        if (!flushing.compareAndSet(false, true)) {
-            return;
-        }
+        if (!flushing.compareAndSet(false, true)) return;
 
         sendNext()
-                .whenComplete((ignored, error) -> flushing.set(false));
+                .whenComplete((ignored, error) -> {
+                    if (error != null) {
+                        MinecraftStatsClient.LOGGER.debug(
+                                "Minecraft Stats queue flush failed.",
+                                error
+                        );
+                    }
+                    flushing.set(false);
+                });
     }
 
     private CompletableFuture<Void> sendNext() {
-        Optional<Path> path = queue.peek();
+        var path = queue.peek();
 
         if (path.isEmpty()) {
             return CompletableFuture.completedFuture(null);
         }
 
         Path batchPath = path.get();
-
-        Optional<String> json = queue.read(batchPath);
+        var json = queue.read(batchPath);
 
         if (json.isEmpty()) {
             queue.remove(batchPath);
@@ -61,13 +110,8 @@ public final class BatchUploader {
 
         return api.postBatch(json.get()).thenCompose(result -> {
             switch (result.kind()) {
-                case SUCCESS, PERMANENT_FAILURE -> {
-                    queue.remove(batchPath);
-                }
-                case RETRY -> {
-                    return CompletableFuture.completedFuture(null);
-                }
-                case DISABLED, NOT_CONFIGURED, INVALID_URL -> {
+                case SUCCESS, PERMANENT_FAILURE -> queue.remove(batchPath);
+                case RETRY, DISABLED, NOT_CONFIGURED, INVALID_URL -> {
                     return CompletableFuture.completedFuture(null);
                 }
             }
