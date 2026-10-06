@@ -1,6 +1,6 @@
-# Minecraft Stats Client
+# HM Stats Client
 
-A generic, client-side Fabric mod for collecting Minecraft statistics and sending them to a self-hosted Minecraft Stats Server.
+A generic, client-side Fabric mod for collecting Minecraft statistics and sending them to a self-hosted HM Stats Server.
 
 ## Scope
 
