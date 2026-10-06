@@ -11,7 +11,6 @@ import io.github.henrymmey.hmstats.session.SessionManager;
 import io.github.henrymmey.hmstats.upload.BatchUploader;
 import io.github.henrymmey.hmstats.upload.StatsSnapshot;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.stats.StatsCounter;
 
@@ -155,7 +154,7 @@ public final class TelemetryController {
         return FabricLoader.getInstance()
                 .getModContainer("minecraft")
                 .map(container -> container.getMetadata().getVersion().getFriendlyString())
-                .orElse(SharedConstants.getCurrentVersion().getId());
+                .orElse("unknown");
     }
 
     private String fabricLoaderVersion() {
