@@ -31,9 +31,12 @@ public final class HMStatsConfigScreen extends Screen {
     private boolean sendEvents;
 
     private Component error;
+    private Component connectionStatus;
+    private boolean testingConnection;
+    private Button testConnectionButton;
 
     public HMStatsConfigScreen(Screen parent) {
-        super(Component.literal("HM Stats Settings"));
+        super(Component.literal("HM Stats Configuration"));
         this.parent = parent;
 
         ClientConfig config = HMStatsClient.config().normalized();
@@ -70,8 +73,17 @@ public final class HMStatsConfigScreen extends Screen {
 
         y += 36;
         this.apiKeyField = addField(left, y, "API key", config.api().key(), 4096);
+        this.apiKeyField.setSuggestion("Paste your HM Stats ingest key");
+        this.apiKeyField.setValue(config.api().key() == null ? "" : config.api().key());
+        this.apiKeyField.setMaxLength(4096);
 
-        y += 36;
+        y += 28;
+        this.testConnectionButton = addRenderableWidget(Button.builder(
+                Component.literal("Test connection"),
+                button -> testConnection()
+        ).bounds(left, y, FIELD_WIDTH, FIELD_HEIGHT).build());
+
+        y += 28;
         this.intervalField = addField(
                 left,
                 y,
@@ -212,6 +224,85 @@ public final class HMStatsConfigScreen extends Screen {
         }
     }
 
+    private void testConnection() {
+        if (testingConnection) {
+            return;
+        }
+
+        String url = apiUrlField.getValue().trim();
+        String key = apiKeyField.getValue();
+
+        if (url.isBlank()) {
+            connectionStatus = Component.literal("Enter an API URL first.");
+            return;
+        }
+        if (key.isBlank()) {
+            connectionStatus = Component.literal("Enter an API key first.");
+            return;
+        }
+
+        try {
+            URI uri = URI.create(url);
+            boolean secure = "https".equalsIgnoreCase(uri.getScheme());
+            boolean localHttp = "http".equalsIgnoreCase(uri.getScheme()) && isLocalHost(uri.getHost());
+
+            if (!secure && !localHttp) {
+                connectionStatus = Component.literal("Use HTTPS (HTTP is allowed only for localhost).");
+                return;
+            }
+
+            testingConnection = true;
+            testConnectionButton.active = false;
+            connectionStatus = Component.literal("Testing connection...");
+
+            java.net.http.HttpClient.newHttpClient()
+                    .sendAsync(
+                            java.net.http.HttpRequest.newBuilder(
+                                            URI.create(url.replaceAll("/+$", "") + "/api/health")
+                                    )
+                                    .timeout(java.time.Duration.ofSeconds(10))
+                                    .header("Authorization", "Bearer " + key)
+                                    .header("Accept", "application/json")
+                                    .GET()
+                                    .build(),
+                            java.net.http.HttpResponse.BodyHandlers.ofString()
+                    )
+                    .whenComplete((response, throwable) -> {
+                        if (throwable != null) {
+                            finishConnectionTest(Component.literal("Connection failed: " + throwable.getClass().getSimpleName()));
+                            return;
+                        }
+
+                        int status = response.statusCode();
+                        if (status >= 200 && status < 300) {
+                            finishConnectionTest(Component.literal("Connection successful."));
+                        } else if (status == 401 || status == 403) {
+                            finishConnectionTest(Component.literal("Server reachable, but the API key was rejected."));
+                        } else if (status == 404) {
+                            finishConnectionTest(Component.literal("Server reachable, but the health endpoint was not found."));
+                        } else {
+                            finishConnectionTest(Component.literal("Server responded with HTTP " + status + "."));
+                        }
+                    });
+        } catch (IllegalArgumentException exception) {
+            connectionStatus = Component.literal("API URL is not valid.");
+        }
+    }
+
+    private void finishConnectionTest(Component status) {
+        if (this.minecraft == null) {
+            return;
+        }
+
+        this.minecraft.execute(() -> {
+            this.connectionStatus = status;
+            this.testingConnection = false;
+            if (this.testConnectionButton != null) {
+                this.testConnectionButton.active = true;
+            }
+        });
+    }
+
     private ValidationResult validate() {
         String url = apiUrlField == null ? "" : apiUrlField.getValue().trim();
 
@@ -291,10 +382,14 @@ public final class HMStatsConfigScreen extends Screen {
 
         graphics.text(this.font, "API URL", left, 43, 0xFFFFFFFF, true);
         graphics.text(this.font, "API key", left, 79, 0xFFFFFFFF, true);
-        graphics.text(this.font, "Upload interval (seconds)", left, 115, 0xFFFFFFFF, true);
-        graphics.text(this.font, "Batch size", left, 151, 0xFFFFFFFF, true);
-        graphics.text(this.font, "Maximum queued batches", left, 187, 0xFFFFFFFF, true);
-        graphics.text(this.font, "Allowed servers (comma-separated)", left, 323, 0xFFFFFFFF, true);
+        graphics.text(this.font, "Upload interval (seconds)", left, 151, 0xFFFFFFFF, true);
+        graphics.text(this.font, "Batch size", left, 187, 0xFFFFFFFF, true);
+        graphics.text(this.font, "Maximum queued batches", left, 223, 0xFFFFFFFF, true);
+        graphics.text(this.font, "Allowed servers (comma-separated)", left, 359, 0xFFFFFFFF, true);
+
+        if (this.connectionStatus != null) {
+            graphics.text(this.font, this.connectionStatus.getString(), left, Math.min(this.height - 85, 455), 0xFFFFFFFF, true);
+        }
 
         if (this.error != null) {
             graphics.text(
