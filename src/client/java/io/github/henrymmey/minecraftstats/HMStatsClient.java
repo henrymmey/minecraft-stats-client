@@ -9,9 +9,12 @@ import io.github.henrymmey.hmstats.session.SessionManager;
 import io.github.henrymmey.hmstats.telemetry.TelemetryController;
 import io.github.henrymmey.hmstats.upload.BatchUploader;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import net.minecraft.client.Minecraft;
 
 import java.nio.file.Path;
 
@@ -28,31 +31,58 @@ public final class HMStatsClient implements ClientModInitializer {
     private static ClientConfig config;
     private static BatchQueue queue;
     private static ApiClient apiClient;
+    private static BatchUploader uploader;
+    private static TelemetryController telemetry;
 
     @Override
     public void onInitializeClient() {
         config = ClientConfig.load(CONFIG_FILE);
+        initializeRuntime();
+
+        ClientTickEvents.END_CLIENT_TICK.register(HMStatsClient::tick);
+
+        LOGGER.info("{} client initialized. Configuration: {}", MOD_ID, CONFIG_FILE);
+    }
+
+    private static synchronized void initializeRuntime() {
         queue = new BatchQueue(QUEUE_DIRECTORY, config.upload().maxQueueSize());
         apiClient = new ApiClient(config);
 
-        BatchUploader uploader = new BatchUploader(apiClient, queue, config);
-        TelemetryController telemetry = new TelemetryController(
+        uploader = new BatchUploader(apiClient, queue, config);
+        telemetry = new TelemetryController(
                 config,
                 new SessionManager(),
                 new VanillaStatsCollector(),
                 new ServerFilter(),
                 uploader
         );
+    }
 
-        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(
-                telemetry::tick
-        );
+    private static void tick(Minecraft minecraft) {
+        if (telemetry != null) {
+            telemetry.tick(minecraft);
+        }
+    }
 
-        LOGGER.info("{} client initialized. Configuration: {}", MOD_ID, CONFIG_FILE);
+    public static synchronized void applyConfig(ClientConfig updated) {
+        config = updated.normalized();
+
+        if (apiClient != null) {
+            apiClient.setConfig(config);
+        }
+        if (queue != null) {
+            queue.setMaxSize(config.upload().maxQueueSize());
+        }
+        if (uploader != null) {
+            uploader.setBatchSize(config.upload().batchSize());
+        }
+        if (telemetry != null) {
+            telemetry.setConfig(config);
+        }
     }
 
     public static ClientConfig config() {
-        return config;
+        return config == null ? ClientConfig.defaults() : config;
     }
 
     public static BatchQueue queue() {
