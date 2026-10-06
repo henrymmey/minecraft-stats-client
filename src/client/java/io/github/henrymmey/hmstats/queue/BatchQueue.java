@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 
 public final class BatchQueue {
     private final Path directory;
-    private final int maxSize;
+    private volatile int maxSize;
 
     public BatchQueue(Path directory, int maxSize) {
         this.directory = directory;
@@ -22,6 +22,10 @@ public final class BatchQueue {
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to initialize upload queue.", exception);
         }
+    }
+
+    public synchronized void setMaxSize(int maxSize) {
+        this.maxSize = Math.max(1, maxSize);
     }
 
     public synchronized boolean offer(String json) {
