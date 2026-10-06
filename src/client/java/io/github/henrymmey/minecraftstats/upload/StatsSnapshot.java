@@ -1,4 +1,4 @@
-package io.github.henrymmey.minecraftstats.upload;
+package io.github.henrymmey.hmstats.upload;
 
 import java.util.HashMap;
 import java.util.Map;
