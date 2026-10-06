@@ -14,10 +14,14 @@ public final class ApiClient {
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
-    private final ClientConfig config;
+    private volatile ClientConfig config;
 
     public ApiClient(ClientConfig config) {
         this.config = config;
+    }
+
+    public void setConfig(ClientConfig config) {
+        this.config = config.normalized();
     }
 
     public CompletableFuture<ApiResult> postBatch(String json) {
