@@ -1,15 +1,15 @@
-package io.github.henrymmey.minecraftstats.telemetry;
+package io.github.henrymmey.hmstats.telemetry;
 
-import io.github.henrymmey.minecraftstats.MinecraftStatsClient;
-import io.github.henrymmey.minecraftstats.collectors.VanillaStatsCollector;
-import io.github.henrymmey.minecraftstats.config.ClientConfig;
-import io.github.henrymmey.minecraftstats.model.ClientEvent;
-import io.github.henrymmey.minecraftstats.model.IngestBatch;
-import io.github.henrymmey.minecraftstats.privacy.ServerFilter;
-import io.github.henrymmey.minecraftstats.session.ClientSession;
-import io.github.henrymmey.minecraftstats.session.SessionManager;
-import io.github.henrymmey.minecraftstats.upload.BatchUploader;
-import io.github.henrymmey.minecraftstats.upload.StatsSnapshot;
+import io.github.henrymmey.hmstats.HMStatsClient;
+import io.github.henrymmey.hmstats.collectors.VanillaStatsCollector;
+import io.github.henrymmey.hmstats.config.ClientConfig;
+import io.github.henrymmey.hmstats.model.ClientEvent;
+import io.github.henrymmey.hmstats.model.IngestBatch;
+import io.github.henrymmey.hmstats.privacy.ServerFilter;
+import io.github.henrymmey.hmstats.session.ClientSession;
+import io.github.henrymmey.hmstats.session.SessionManager;
+import io.github.henrymmey.hmstats.upload.BatchUploader;
+import io.github.henrymmey.hmstats.upload.StatsSnapshot;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
@@ -146,7 +146,7 @@ public final class TelemetryController {
 
     private String modVersion() {
         return FabricLoader.getInstance()
-                .getModContainer(MinecraftStatsClient.MOD_ID)
+                .getModContainer(HMStatsClient.MOD_ID)
                 .map(container -> container.getMetadata().getVersion().getFriendlyString())
                 .orElse("unknown");
     }
