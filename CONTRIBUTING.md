@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for contributing to Minecraft Stats Platform.
+Thank you for contributing to HM Stats.
 
 ## General rules
 
