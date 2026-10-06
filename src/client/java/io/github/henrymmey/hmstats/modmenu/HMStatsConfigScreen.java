@@ -70,9 +70,6 @@ public final class HMStatsConfigScreen extends Screen {
 
         y += 36;
         this.apiKeyField = addField(left, y, "API key", config.api().key(), 4096);
-        this.apiKeyField.setFormatter((value, cursor) ->
-                net.minecraft.util.FormattedCharSequence.forward("•".repeat(value.length()))
-        );
 
         y += 36;
         this.intervalField = addField(
@@ -178,7 +175,7 @@ public final class HMStatsConfigScreen extends Screen {
 
     private void save() {
         ValidationResult validation = validate();
-        if (!validation.valid()) {
+        if (!validation.isValid()) {
             this.error = Component.literal(validation.error());
             return;
         }
@@ -259,7 +256,7 @@ public final class HMStatsConfigScreen extends Screen {
             return ValidationResult.invalid("Maximum queued batches must be between 1 and 5000.");
         }
 
-        return ValidationResult.valid();
+        return ValidationResult.success();
     }
 
     private List<String> parseServers(String value) {
@@ -311,8 +308,8 @@ public final class HMStatsConfigScreen extends Screen {
         }
     }
 
-    private record ValidationResult(boolean valid, String error) {
-        static ValidationResult valid() {
+    private record ValidationResult(boolean isValid, String error) {
+        static ValidationResult success() {
             return new ValidationResult(true, "");
         }
 
