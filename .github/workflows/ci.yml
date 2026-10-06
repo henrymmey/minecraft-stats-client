@@ -28,5 +28,5 @@ jobs:
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
-          name: minecraft-stats-client
+          name: hm-stats-client
           path: build/libs/*.jar
