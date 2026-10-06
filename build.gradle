@@ -11,7 +11,7 @@ loom {
 	splitEnvironmentSourceSets()
 
 	mods {
-		"minecraft-stats" {
+		"hm-stats" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}
@@ -46,7 +46,7 @@ java {
 
 jar {
 	from("LICENSE") {
-		rename { "${it}_minecraft-stats-client" }
+		rename { "${it}_hm-stats-client" }
 	}
 }
 
