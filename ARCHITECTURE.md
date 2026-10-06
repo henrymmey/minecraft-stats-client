@@ -43,7 +43,7 @@ Minecraft
 ```
 src/main/java/<base-package>/
 ├── client/
-│   └── MinecraftStatsClient.java
+│   └── HMStatsClient.java
 ├── config/
 │   ├── ClientConfig.java
 │   └── ConfigRepository.java
