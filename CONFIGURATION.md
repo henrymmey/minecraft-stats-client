@@ -2,7 +2,7 @@
 
 Canonical file:
 
-`config/minecraft-stats.json`
+`config/hm-stats.json`
 
 Example:
 
