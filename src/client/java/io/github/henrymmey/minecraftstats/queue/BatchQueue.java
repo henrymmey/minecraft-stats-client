@@ -1,4 +1,4 @@
-package io.github.henrymmey.minecraftstats.queue;
+package io.github.henrymmey.hmstats.queue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
