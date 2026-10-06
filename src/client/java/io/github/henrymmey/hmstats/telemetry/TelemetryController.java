@@ -155,7 +155,7 @@ public final class TelemetryController {
         return FabricLoader.getInstance()
                 .getModContainer("minecraft")
                 .map(container -> container.getMetadata().getVersion().getFriendlyString())
-                .orElse(SharedConstants.getCurrentVersion().getName());
+                .orElse(SharedConstants.getCurrentVersion().getId());
     }
 
     private String fabricLoaderVersion() {
