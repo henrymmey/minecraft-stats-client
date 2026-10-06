@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class TelemetryController {
-    private final ClientConfig config;
+    private volatile ClientConfig config;
     private final SessionManager sessions;
     private final VanillaStatsCollector stats;
     private final ServerFilter serverFilter;
@@ -43,6 +43,10 @@ public final class TelemetryController {
         this.serverFilter = serverFilter;
         this.uploader = uploader;
         this.ticksUntilSnapshot = 1;
+    }
+
+    public void setConfig(ClientConfig config) {
+        this.config = config.normalized();
     }
 
     public void tick(Minecraft minecraft) {
