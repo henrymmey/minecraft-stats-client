@@ -13,6 +13,9 @@
 	"entrypoints": {
 		"client": [
 			"io.github.henrymmey.hmstats.HMStatsClient"
+		],
+		"modmenu": [
+			"io.github.henrymmey.hmstats.modmenu.ModMenuIntegration"
 		]
 	},
 	"depends": {
