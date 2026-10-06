@@ -1,6 +1,6 @@
-package io.github.henrymmey.minecraftstats.api;
+package io.github.henrymmey.hmstats.api;
 
-import io.github.henrymmey.minecraftstats.config.ClientConfig;
+import io.github.henrymmey.hmstats.config.ClientConfig;
 
 import java.net.URI;
 import java.net.http.HttpClient;
