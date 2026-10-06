@@ -1,6 +1,6 @@
-package io.github.henrymmey.minecraftstats.privacy;
+package io.github.henrymmey.hmstats.privacy;
 
-import io.github.henrymmey.minecraftstats.config.ClientConfig;
+import io.github.henrymmey.hmstats.config.ClientConfig;
 
 import java.util.Locale;
 
