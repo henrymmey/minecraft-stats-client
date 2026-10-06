@@ -1,4 +1,4 @@
-package io.github.henrymmey.minecraftstats.model;
+package io.github.henrymmey.hmstats.model;
 
 import java.util.Map;
 import java.util.UUID;
