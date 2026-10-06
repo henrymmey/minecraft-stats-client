@@ -1,4 +1,4 @@
-package io.github.henrymmey.minecraftstats.config;
+package io.github.henrymmey.hmstats.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -82,7 +82,7 @@ public record ClientConfig(
 
             return parsed == null ? defaults() : parsed.normalized();
         } catch (Exception exception) {
-            throw new IllegalStateException("Failed to load Minecraft Stats configuration.", exception);
+            throw new IllegalStateException("Failed to load HM Stats configuration.", exception);
         }
     }
 
@@ -104,7 +104,7 @@ public record ClientConfig(
                     StandardCopyOption.ATOMIC_MOVE
             );
         } catch (IOException exception) {
-            throw new IllegalStateException("Failed to save Minecraft Stats configuration.", exception);
+            throw new IllegalStateException("Failed to save HM Stats configuration.", exception);
         }
     }
 }
