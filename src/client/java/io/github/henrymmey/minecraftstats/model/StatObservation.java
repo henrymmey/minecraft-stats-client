@@ -1,4 +1,4 @@
-package io.github.henrymmey.minecraftstats.model;
+package io.github.henrymmey.hmstats.model;
 
 public record StatObservation(String key, long value) {
 }
