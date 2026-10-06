@@ -24,7 +24,7 @@ public final class BatchUploader {
 
     private final ApiClient api;
     private final BatchQueue queue;
-    private final int batchSize;
+    private volatile int batchSize;
     private final AtomicBoolean flushing = new AtomicBoolean();
 
     private volatile long nextAttemptAtMillis = 0L;
@@ -34,7 +34,11 @@ public final class BatchUploader {
     public BatchUploader(ApiClient api, BatchQueue queue, ClientConfig config) {
         this.api = api;
         this.queue = queue;
-        this.batchSize = Math.max(1, Math.min(500, config.upload().batchSize()));
+        setBatchSize(config.upload().batchSize());
+    }
+
+    public void setBatchSize(int batchSize) {
+        this.batchSize = Math.max(1, Math.min(500, batchSize));
     }
 
     public void enqueue(IngestBatch base, Map<String, Long> changedStats, List<ClientEvent> events) {
