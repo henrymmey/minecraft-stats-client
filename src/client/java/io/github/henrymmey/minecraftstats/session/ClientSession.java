@@ -1,4 +1,4 @@
-package io.github.henrymmey.minecraftstats.session;
+package io.github.henrymmey.hmstats.session;
 
 import java.util.UUID;
 
