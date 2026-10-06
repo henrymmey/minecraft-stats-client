@@ -1,15 +1,15 @@
-package io.github.henrymmey.minecraftstats.upload;
+package io.github.henrymmey.hmstats.upload;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.github.henrymmey.minecraftstats.MinecraftStatsClient;
-import io.github.henrymmey.minecraftstats.api.ApiClient;
-import io.github.henrymmey.minecraftstats.config.ClientConfig;
-import io.github.henrymmey.minecraftstats.model.ClientEvent;
-import io.github.henrymmey.minecraftstats.model.IngestBatch;
-import io.github.henrymmey.minecraftstats.model.StatObservation;
-import io.github.henrymmey.minecraftstats.queue.BatchQueue;
+import io.github.henrymmey.hmstats.HMStatsClient;
+import io.github.henrymmey.hmstats.api.ApiClient;
+import io.github.henrymmey.hmstats.config.ClientConfig;
+import io.github.henrymmey.hmstats.model.ClientEvent;
+import io.github.henrymmey.hmstats.model.IngestBatch;
+import io.github.henrymmey.hmstats.model.StatObservation;
+import io.github.henrymmey.hmstats.queue.BatchQueue;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -72,8 +72,8 @@ public final class BatchUploader {
         );
 
         if (!queue.offer(GSON.toJson(batch))) {
-            MinecraftStatsClient.LOGGER.warn(
-                    "Minecraft Stats upload queue is full; dropping one batch."
+            HMStatsClient.LOGGER.warn(
+                    "HM Stats upload queue is full; dropping one batch."
             );
         } else {
             blocked = false;
@@ -87,8 +87,8 @@ public final class BatchUploader {
         sendNext()
                 .whenComplete((ignored, error) -> {
                     if (error != null) {
-                        MinecraftStatsClient.LOGGER.debug(
-                                "Minecraft Stats queue flush failed.",
+                        HMStatsClient.LOGGER.debug(
+                                "HM Stats queue flush failed.",
                                 error
                         );
                     }
@@ -131,8 +131,8 @@ public final class BatchUploader {
 
                 case PERMANENT_FAILURE, NOT_CONFIGURED, INVALID_URL -> {
                     blocked = true;
-                    MinecraftStatsClient.LOGGER.warn(
-                            "Minecraft Stats upload paused because the queued request cannot be accepted. HTTP status: {}. The queued data was kept.",
+                    HMStatsClient.LOGGER.warn(
+                            "HM Stats upload paused because the queued request cannot be accepted. HTTP status: {}. The queued data was kept.",
                             result.httpStatus()
                     );
                     return CompletableFuture.completedFuture(null);
