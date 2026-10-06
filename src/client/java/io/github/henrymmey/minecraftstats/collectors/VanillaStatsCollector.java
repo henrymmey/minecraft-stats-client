@@ -1,4 +1,4 @@
-package io.github.henrymmey.minecraftstats.collectors;
+package io.github.henrymmey.hmstats.collectors;
 
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
