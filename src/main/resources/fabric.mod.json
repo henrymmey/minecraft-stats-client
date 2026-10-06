@@ -1,8 +1,8 @@
 {
 	"schemaVersion": 1,
-	"id": "minecraft-stats",
+	"id": "hm-stats",
 	"version": "${version}",
-	"name": "Minecraft Stats",
+	"name": "HM Stats",
 	"description": "Generic client-side Minecraft statistics client for self-hosted Stats Servers.",
 	"authors": ["Henry Meyer"],
 	"contact": {
@@ -12,7 +12,7 @@
 	"environment": "client",
 	"entrypoints": {
 		"client": [
-			"io.github.henrymmey.minecraftstats.MinecraftStatsClient"
+			"io.github.henrymmey.hmstats.HMStatsClient"
 		]
 	},
 	"depends": {
